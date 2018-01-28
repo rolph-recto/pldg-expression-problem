@@ -1,8 +1,9 @@
 ---
 title: The Expression Problem
 subtitle: A Cornell PLDG Tutorial
-author: Josh Acay and Rolph Recto
-date: January 31, 2016
+author:  Rolph Recto and Josh Acay
+date: January 31, 2018
+
 colortheme: whale
 fontsize: 9pt
 ---
@@ -38,7 +39,7 @@ Wadler's criteria for solutions:
 
 * must be able to simultaneously add new operations and new variants
 
-* cannot modifying existing code
+* cannot modifying existing code (e.g. you don't own the source code)
 
 * type-safe
 
@@ -54,107 +55,166 @@ code.*
 
 ###
 
-**Datatype**: `EXPR ::= n | EXPR + EXPR | EXPR * EXPR`
+**Datatype**: `EXPR ::= n | EXPR + EXPR
 
 ###
 
-**Operations**: `evalExpr`, `printExpr`
+**Operations**: `eval`, `show`
 
 
-## An Example
+## Haskell Implementation
 
 Source code of library in Haskell:
 
 ```Haskell
-data Expr = Lit Int | Add Expr Expr | Mul Expr Expr
+data Expr
+  = Lit Int
+  | Add Expr Expr
 
-evalExpr :: Expr -> Int
-evalExpr (Lit val)    = val
-evalExpr (Add e1 e2)  = (eval e1) + (eval e2)
-evalExpr (Mul e1 e2)  = (eval e1) * (eval e2)
+eval :: Expr -> Int
+eval (Lit val)   = val
+eval (Add e1 e2) = (eval e1) + (eval e2)
 
-printExpr :: Expr -> String
-printExpr (Lit val)   = show val
-printExpr (Add e1 e2) = (printExpr e1) ++ " + " ++ (printExpr e2)
-printExpr (Mul e1 e2) = (printExpr e1) ++ " * " ++ (printExpr e2)
+show :: Expr -> String
+show (Lit val)   = show val
+show (Add e1 e2) = (show e1) ++ " + " ++ (show e2)
 ```
 
 
-## An Example
+## Java Implementation
 
 Source code of library in Java:
 
 ```Java
 interface Expr {
-  int evalExpr();
-  String printExpr();
+  int eval();
+  String show();
 }
 
-class LitExpr implements Expr {
+class Lit implements Expr {
   int val;
-  LitExpr(int v) { val = v; }
+  Lit(int v) { val = v; }
 
-  int evalExpr() { return val; }
-  String printExpr() {
+  int eval() { return val; }
+  String show() {
     return Integer.toString(val);
   }
 }
+
+class Add implements Expr {
+  Expr e1, e2;
+  Add(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+
+  int eval() { return arg1.eval() + arg2.eval(); }
+  String show() {
+    return arg1.show() + " + " + arg2.show();
+  }
+}
 ```
 
 
-## An Example
+## Java Implementation
 
 ```Java
-class AddExpr implements Expr {
+class Add implements Expr {
   Expr e1, e2;
-  AddExpr(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+  Add(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
 
-  int evalExpr() { return arg1.evalExpr() + arg2.evalExpr(); }
-  String printExpr() {
-    return arg1.printExpr() + " + " + arg2.printExpr();
-  }
-}
-
-class MulExpr implements Expr {
-  Expr e1, e2;
-  MulExpr(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
-
-  int evalExpr() { return arg1.evalExpr() * arg2.evalExpr(); }
-  String printExpr() {
-    return arg1.printExpr() + " * " + arg2.printExpr();
+  int eval() { return arg1.eval() + arg2.eval(); }
+  String show() {
+    return arg1.show() + " + " + arg2.show();
   }
 }
 ```
 
 
-## An Example
+## Adding New Operations
 
-You happily use the arithmetic expressions library for Haskell/Java above for a
-while, but you soon run into problems.
-
-. . .
-
-###
-
-Suppose you want to add a new operation to calculate the size of expressions.
+Suppose you want to add a new operation to compute size of expressions...
 
 . . .
 
-> * **Haskell**: Easy! Just create a new function `sizeExpr`.
-> * **Java**: Hard! Have to change `Expr` interface, but you don't have access
-  to the library source code.
+In **Haskell**: Easy! Just create a new function:
+
+```Haskell
+size :: Expr -> Int
+size (Lit x)     = 1
+size (Add e1 e2) = 1 + size e1 + size e2
+```
+
+
+## Adding New Operations
+
+TODO: align to the top, so works with previous slide.
+
+Suppose you want to add a new operation to compute size of expressions...
+
+In **Java**: Hard! Have to change `Expr` interface, but you don't have access
+to the library source code.
+
+```Java
+interface Expr {
+  int eval();
+  String show();
+  // int size();
+}
+
+// Also modify all implementations...
+```
+
+
+## Adding New Cases
+
+Suppose you want to add multiplication.
 
 . . .
 
-###
+In **Haskell**: Hard! Need to change definition of `Expr` and
+implementations of `eval` and `show`, but you don't have access
+to the library source code.
 
-Suppose you want to add a new kind of expression for negative numbers.
+```Haskell
+data Expr
+  = Lit Int
+  | Add Expr Expr
+  -- | Mul Expr Expr
 
-. . .
+eval :: Expr -> Int
+eval (Lit val)   = val
+eval (Add e1 e2) = (eval e1) + (eval e2)
+-- eval (Mul e1 e2) = (eval e1) * (eval e2)
 
-> * **Haskell**: Hard! Need to change implementation of `evalExpr` and
-  `printExpr`, but you don't have access to the library source code.
-> * **Java**: Easy! Just create a new class `NegExpr`.
+show :: Expr -> String
+show (Lit val)   = show val
+show (Add e1 e2) = (show e1) ++ " + " ++ (show e2)
+-- show (Mul e1 e2) = (show e1) ++ " * " ++ (show e2)
+```
+
+
+## Adding New Cases
+
+Suppose you want to add multiplication.
+
+In **Java**: Easy! Just create a new class `Mul`:
+
+```Java
+class Mul implements Expr {
+  Expr e1, e2;
+  Mul (Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+
+  int eval() { return arg1.eval() * arg2.eval(); }
+  String show() {
+    return arg1.show() + " * " + arg2.show();
+  }
+}
+```
+
+
+## Other Problems (Notes, TODO: remove or move at the end)
+
+* Extending the return type
+* Binary methods (like equality)
+* Effects (type checking requires context, use state monad)
 
 
 ## The Problem
@@ -162,13 +222,13 @@ Suppose you want to add a new kind of expression for negative numbers.
 +-----+------+-------+------+
 |     | eval | print | size |
 +=====+======+=======+======+
-| Lit |    |     |    |
+| Lit |      |       |      |
 +-----+------+-------+------+
-| Add |    |     |    |
+| Add |      |       |      |
 +-----+------+-------+------+
-| Mul |    |     |    |
+| Mul |      |       |      |
 +-----+------+-------+------+
-| Neg |    |     |    |
+| Neg |      |       |      |
 +-----+------+-------+------+
 
 . . .
@@ -183,6 +243,8 @@ Suppose you want to add a new kind of expression for negative numbers.
 
 
 ## The Problem
+
+TODO: wording is confusing
 
 > * Functional languages group behaviors of all variants for a single operation
 
@@ -225,21 +287,15 @@ interface ExprVisitor<R> {
 ## Object-oriented solutions: Visitor pattern
 
 ```Java
-class LitExpr implements Expr {
+class Lit implements Expr {
   int val;
-  LitExpr(int v) { val = v; }
+  Lit(int v) { val = v; }
   <R> R accept(ExprVisitor<R> v) { return v.lit(val);  }
 }
 
-class AddExpr implements Expr {
+class Add implements Expr {
   Expr e1, e2;
-  AddExpr(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
-  <R> R accept(ExprVisitor<R> v) { return v.add(e1, e2);  }
-}
-
-class MulExpr implements Expr {
-  Expr e1, e2;
-  AddExpr(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+  Add(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
   <R> R accept(ExprVisitor<R> v) { return v.add(e1, e2);  }
 }
 ```
@@ -248,23 +304,17 @@ class MulExpr implements Expr {
 ## Object-oriented solutions: Visitor pattern
 
 ```Java
-class EvalExpr implements ExprVisitor<Integer> {
+class Eval implements ExprVisitor<Integer> {
   Integer lit(int val) { return val; }
   Integer add(Expr e1, Expr e2) {
     return e1.accept(this) + e2.accept(this);
   }
-  Integer mul(Expr e1, Expr e2) {
-    return e1.accept(this) * e2.accept(this);
-  }
 }
 
-class PrintExpr implements ExprVisitor<String> {
+class Show implements ExprVisitor<String> {
   String lit(int val) { return Integer.toString(val); }
   String add(Expr e1, Expr e2) {
     return e1.accept(this) + " + " + e2.accept(this);
-  }
-  String mul(Expr e1, Expr e2) {
-    return e1.accept(this) + " * " + e2.accept(this);
   }
 }
 ```
@@ -276,13 +326,10 @@ the library.
 
 ###
 ```Java
-class SizeExpr implements ExprVisitor<Integer> {
+class Size implements ExprVisitor<Integer> {
   Integer lit(int val) { return 1; }
   Integer add(Expr e1, Expr e2) {
-    return e1.accept(this) + e2.accept(this) + 1;
-  }
-  Integer mul(Expr e1, Expr e2) {
-    return e1.accept(this) + e2.accept(this) + 1;
+    return 1 + e1.accept(this) + e2.accept(this);
   }
 }
 ```
@@ -303,19 +350,20 @@ Can we use inheritance to make adding new kinds of expressions easy?
 
 ###
 ```Java
-interface ExprWithNeg extends Expr {
-  <R> R accept(ExprWithNegVisitor<R> v);
+interface ExprWithMul extends Expr {
+  <R> R accept(ExprWithMulVisitor<R> v);
 }
 
-interface ExprWithNegVisitor<R> extends ExprVisitor<R> {
-  R neg(ExprWithNeg e);
+interface ExprWithMulVisitor<R> extends ExprVisitor<R> {
+  R mul(ExprWithMul e);
 }
 
-class NegExpr implements ExprWithNeg {
-  Expr expr;
-  NegExpr(Expr e) { expr = e; }
+class MulExpr implements ExprWithMul {
+  Expr e1, e2;
+  Mul(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+
+  <R> R accept(ExprWithMulVisitor<R> v) { return v.mul(expr); }
   <R> R accept(ExprVisitor<R> v) { /* what do we call here?? */ }
-  <R> R accept(ExprWithNegVisitor<R> v) { return v.neg(expr); }
 }
 ```
 
@@ -335,19 +383,16 @@ class NegExpr implements ExprWithNeg {
 interface ExprAlgebra<E> {
   E lit(int val);
   E add(E e1, E e2);
-  E mul(E e1, E e2);
 }
 
-class EvalExpr implements ExprAlgebra<Integer> {
+class Eval implements ExprAlgebra<Integer> {
   Integer lit(int val) { return val; }
   Integer add(Integer e1, Integer e2) { return e1 + e2; }
-  Integer mul(Integer e1, Integer e2) { return e1 * e2; }
 }
 
-class PrintExpr implements ExprAlgebra<String> {
+class Show implements ExprAlgebra<String> {
   String lit(int val) { return Integer.toString(val); }
   String add(String e1, String e2) { return e1 + " + " + e2; }
-  String mul(String e1, String e2) { return e1 + " * " + e2; }
 }
 ```
 
@@ -359,10 +404,9 @@ implements the `ExprAlgebra<E>` interface.
 
 ###
 ```Java
-class SizeExpr implements ExprAlgebra<Integer> {
+class Size implements ExprAlgebra<Integer> {
   Integer lit(int val) { return 1; }
-  Integer add(Integer e1, Integer e2) { return e1 + e2 + 1; }
-  Integer mul(Integer e1, Integer e2) { return e1 + e2 + 1; }
+  Integer add(Integer e1, Integer e2) { return 1 + e1 + e2; }
 }
 ```
 
@@ -377,23 +421,23 @@ extend existing operations easily.
 ## Object-oriented solutions: Object algebras
 
 ```Java
-interface ExprNegAlgebra<E>  {
-  E neg(E expr);
+interface ExprMulAlgebra<E>  {
+  E mul(E e1, E e2);
 }
 
-class EvalNegExpr
-extends PrintExpr implements ExprNegAlgebra<Integer> {
-  Integer neg(Integer e) { return 0 - e; }
+class EvalMul
+extends EvalMul implements ExprMulAlgebra<Integer> {
+  Integer mul(Integer e1, Integer e2) { return e1 * e2; }
 }
 
-class PrintNegExpr
-extends PrintExpr implements ExprNegAlgebra<String> {
-  String neg(String e) { return "-(" + e + ")"; }
+class ShowMul
+extends Show implements ExprMulAlgebra<String> {
+  String mul(String e1, String e2) { return e1 + " * " + e2; }
 }
 
-class SizeNegExpr
-extends SizeExpr implements ExprNegAlgebra<Integer> {
-  Integer neg(Integer e) { return e + 1; }
+class SizeMul
+extends Size implements ExprNegAlgebra<Integer> {
+  Integer mul(Integer e1, Integer e2) { return 1 + e1 + e2; }
 }
 ```
 
