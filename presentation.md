@@ -814,15 +814,29 @@ type ExprWithMul' = Sum Expr' Mul'
 
 type ExprWithMul = Fix ExprWithMul'
 
->>> fold eval $ In (Right (Mul (In (Left (Lit 3))) (In (Left (Lit 4))))) ==> 12
+>>> fold eval $
+>>>   In (Right (Mul (In (Left (Lit 3))) (In (Left (Lit 4)))))
+>>>   ==> 12
+```
+
+. . .
+
+OK, that example is ugly... Let's throw in smart constructors and type classes.
 
 
 ## Syntactic Sugar
 
+This is the hacky part of Data types a la carte.
+
 TODO
 
 
-## Extension
+## Data types a la carte: Lessons
+
+Really a hack to emulate polymorphic variants.
+
+
+## Extensions
 
 * Open result type
 * Products of signatures (cref auto location tagging and compositional data types)
