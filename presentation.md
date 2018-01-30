@@ -808,6 +808,15 @@ type ExprWithMul = Fix ExprWithMul'
 >>   ==> 12
 ```
 
+. . .
+
+OK, that example was ugly... There are ways to make it nicer
+using smart constructors and type classes, but almost all of
+them are Haskell hacks.
+
+Most work goes into getting it closer to OCaml's `Polymorphic Variants`.
+
+
 ## Data types a la carte: Lessons
 
 Really a hack to emulate polymorphic variants.
@@ -826,6 +835,7 @@ Really a hack to emulate polymorphic variants.
 ## Other Solutions
 
 These are just two examples of solutions! There are many more.
+
 
 ### Language Extensions
 
