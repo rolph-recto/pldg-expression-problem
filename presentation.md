@@ -14,8 +14,8 @@ fontsize: 9pt
 
 ![Phil Wadler](wadler.gif){ width=50% }
 
-* Coined by Phil Wadler in a mailing list discussion, but known before that
-  (Reynolds 1975)
+Coined by Phil Wadler in a mailing list discussion, but known before that
+(Reynolds 1975)
 
 
 ## The Problem
@@ -321,8 +321,8 @@ Nice! But there's a problem. Can you guess?
 
 ## Object-oriented Solutions: Visitor Pattern
 
-However, what was easy is now hard: to add new kinds of expressions, we need to
-change the `ExprVisitor` interface of the library.
+What was easy is now hard: to add new kinds of expressions, we need to change
+the `ExprVisitor` interface of the library.
 
 ###
 **Visitors flip the expression problem for object-oriented languages**.
@@ -515,6 +515,8 @@ x :: Print "2 + 3"
 ```
 
 ## Data types a la carte
+
+### Data types a la carte
 
 *à la carte* /ah luh kahrt, al-uh/: _as separately priced items from a menu, not
 as part of a set._
@@ -803,7 +805,7 @@ type ExprWithMul = Fix ExprWithMul'
 Really a hack to emulate polymorphic variants.
 
 
-## Solutions
+## Other Solutions
 
 These are just two examples of solutions! There are many more.
 

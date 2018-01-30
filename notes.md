@@ -1,3 +1,14 @@
+TODOS:
+
+finish last slide!
+
+reread data abstraction revisited
+read reynolds 1975
+
+read J& + Familia
+read extensible visitors (Krishnamurti, Felleisen)
+
+read wadler + torgensen self-types solutions
 
 ## Visitor Pattern
 
