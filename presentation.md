@@ -526,6 +526,9 @@ x :: Print "2 + 3"
 as part of a set._
 
 
+_Data types a la carte_ (Swierstra)
+
+
 ## Data types a la carte
 
 *Idea*: use open recursion, i.e. take recursive occurrences as an argument.
@@ -534,10 +537,11 @@ as part of a set._
 data Expr' e
   = Lit Int
   | Add e e -- Use e not Expr!
-  
+
 >> Lit 10     :: Expr' a
 >> Add 10 10  :: Expr' Int
 ```
+
 
 ## Data types a la carte
 
@@ -557,6 +561,9 @@ Note how we assume that recursive calls have already been made!
 
 `Expr'` encodes one level of the recursive type. Subexpressions
 are left abstract.
+
+`Expr'` is called a _signature_.
+
 
 ## Tying the Knot
 
@@ -762,7 +769,7 @@ Nice! How do we combine `Expr'` and `Mul'` though?
 
 ## Adding New Cases
 
-To combine two open data types, or signatures, take their coproduct.
+To combine two signatures, take their coproduct.
 
 This is similar to an `Either` but over type constructors:
 
@@ -810,16 +817,94 @@ type ExprWithMul = Fix ExprWithMul'
 
 . . .
 
-OK, that example was ugly... There are ways to make it nicer
-using smart constructors and type classes, but almost all of
-them are Haskell hacks.
-
-Most work goes into getting it closer to OCaml's `Polymorphic Variants`.
+OK, that example was ugly... We can make it nicer using smart
+constructors and type classes.
 
 
-## Data types a la carte: Lessons
+## Making it Readable
 
-Really a hack to emulate polymorphic variants.
+Define smart constructors satisftying
+
+```Haskell
+lit :: (Expr' :<: f) => Int -> Fix f
+add :: (Expr' :<: f) => Fix f -> Fix f -> Fix f
+mul :: (Mul' :<: f) => Fix f -> Fix f -> Fix f
+```
+
+. . .
+
+where `sub :<: sup` means signature `sup` supports `sub`.
+Concretely, just says that there is an injection from `sub` to
+`sup`.
+
+```Haskell
+class (Functor sub, Functor sup) => sub :<: sup where
+  inj :: sub a -> sup a
+```
+
+## Making it Readable
+
+We can now define the smart constructors:
+
+```Haskell
+lit :: (Expr' :<: f) => Int -> Fix f
+lit x = In (inj (Lit x))
+
+add :: (Expr' :<: f) => Fix f -> Fix f -> Fix f
+add e1 e2 = In (inj (Add e1 e2))
+
+...
+```
+
+. . .
+
+And our example looks nicer
+
+```Haskell
+example :: ExprWithMul
+example = mul (lit 3) (lit 4)
+```
+
+. . .
+
+How do we define `sub :<: sup` though?
+
+
+## Making it Readable
+
+There are many ways; most are broken. Almost all work goes
+into getting that closer to the ideal, i.e. OCaml's Polymorphic
+Variants.
+
+. . .
+
+Here is one:
+
+```Haskell
+instance Functor f => f :<: f where
+  inj = id
+
+instance (Functor f, Functor g) => f :<: Sum f g where
+  inj = Left
+
+instance (Functor f, Functor g, Functor h, f :<: g) => f :<: Sum h g where
+  inj = Right . inj
+```
+
+. . .
+
+What's bad about this definition?
+
+
+## Data types a la carte: Takeaways
+
+* Use open recursion, i.e. "signatures"
+
+* Define sum over signatures
+
+. . .
+
+* Really a hack to emulate polymorphic variants.
 
 
 ## Other Issues
