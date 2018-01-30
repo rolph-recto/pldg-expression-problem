@@ -27,15 +27,12 @@ From: Philip Wadler <wadler@research.bell-labs.com>
                 The Expression Problem
              Philip Wadler, 12 November 1998
 
-The Expression Problem is a new name for an old problem.
-The goal is to define a datatype by cases, where one can
-add new cases to the datatype and new functions over the
-datatype, without recompiling existing code, and while
-retaining static type safety (e.g., no casts).
+The Expression Problem is a new name for an old problem...
 ```
 
-## The Problem
+. . .
 
+###
 Wadler's criteria for solutions:
 
 * must be able to simultaneously add new operations and new variants
@@ -47,10 +44,9 @@ Wadler's criteria for solutions:
 
 ## An Example
 
-**Scenario**: You are a software engineer at BFC (Big Friendly Corporation) and
-your application needs a way to manipulate arithmetic expressions. You use a
-library to support this feature. *You have no access to the library's source
-code.*
+**Scenario**: You are a software engineer and your application needs a way to
+manipulate arithmetic expressions. You use a library to support this feature.
+*You have no access to the library's source code.*
 
 . . .
 
@@ -150,6 +146,31 @@ interface Expr {
 // Also modify all implementations...
 ```
 
+## Adding New Cases
+
+Suppose you want to add multiplication.
+
+###
+In **Java**: Easy! Just create a new class `Mul`:
+
+```Java
+class Mul implements Expr {
+  Expr e1, e2;
+  Mul (Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
+
+  int eval() { return arg1.eval() * arg2.eval(); }
+  String print() {
+    return arg1.print() + " * " + arg2.print();
+  }
+}
+
+
+
+
+
+
+
+```
 
 ## Adding New Cases
 
@@ -179,54 +200,37 @@ print (Add e1 e2) = (print e1) ++ " + " ++ (print e2)
 -- print (Mul e1 e2) = (print e1) ++ " * " ++ (print e2)
 ```
 
-## Adding New Cases
+## The Problem
 
-Suppose you want to add multiplication.
++---------+------------+------------+------------+
+|         | eval       | print      | **size**   |
++=========+============+============+============+
+| Lit     | \checkmark | \checkmark | \checkmark |
++---------+------------+------------+------------+
+| Add     | \checkmark | \checkmark | \checkmark |
++---------+------------+------------+------------+
+| **Mul** | X          | X          | \checkmark |
++---------+------------+------------+------------+
 
 ###
-In **Java**: Easy! Just create a new class `Mul`:
+**Functional languages**: hard to add new variants (rows)
 
-```Java
-class Mul implements Expr {
-  Expr e1, e2;
-  Mul (Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
-
-  int eval() { return arg1.eval() * arg2.eval(); }
-  String print() {
-    return arg1.print() + " * " + arg2.print();
-  }
-}
-
-
-
-
-
-
-
-```
+* code is grouped by operation
 
 
 ## The Problem
 
-+-----+------+-------+------+
-|     | eval | print | size |
-+=====+======+=======+======+
-| Lit |      |       |      |
-+-----+------+-------+------+
-| Add |      |       |      |
-+-----+------+-------+------+
-| Mul |      |       |      |
-+-----+------+-------+------+
-| Neg |      |       |      |
-+-----+------+-------+------+
++---------+------------+------------+------------+
+|         | eval       | print      | **size**   |
++=========+============+============+============+
+| Lit     | \checkmark | \checkmark | X          |
++---------+------------+------------+------------+
+| Add     | \checkmark | \checkmark | X          |
++---------+------------+------------+------------+
+| **Mul** | \checkmark | \checkmark | \checkmark |
++---------+------------+------------+------------+
 
-. . .
 
-###
-
-**Functional languages**: hard to add new variants (rows)
-
-* code is grouped by operation
 
 ###
 
@@ -405,7 +409,7 @@ extend existing operations easily.
 ## Object-oriented Solutions: Object Algebras
 
 ```Java
-interface ExprMulAlgebra<E>  {
+interface ExprMulAlgebra<E> extends ExprAlgebra<E> {
   E mul(E e1, E e2);
 }
 
@@ -420,7 +424,7 @@ extends Print implements ExprMulAlgebra<String> {
 }
 
 class SizeMul
-extends Size implements ExprNegAlgebra<Integer> {
+extends Size implements ExprMulAlgebra<Integer> {
   Integer mul(Integer e1, Integer e2) { return 1 + e1 + e2; }
 }
 ```
@@ -431,12 +435,12 @@ extends Size implements ExprNegAlgebra<Integer> {
 How do we use object algebras? Replace constructors with function calls.
 
 ```Java
-<A> A expr(ExprAlgebra<A> alg) {
-  return alg.add(alg.lit(2), alg.lit(2));
+<A> A expr(ExprMulAlgebra<A> alg) {
+  return alg.add(alg.mul(alg.lit(2), alg.lit(2)), alg.lit(2));
 }
 
-Integer exprVal = expr(new Eval()); // 4
-String  exprStr = expr(new Print()); // "2 + 2"
+Integer exprVal = expr(new EvalMul()); // 6
+String  exprStr = expr(new PrintMul()); // "2 * 2 + 2"
 ```
 
 ## Object Algebras vs. Finally Tagless Style
@@ -598,6 +602,7 @@ Let's try again with functors.
 
 ```Haskell
 instance Functor Expr' where
+  fmap :: (a -> b) -> (Expr' a -> Expr' b)
   fmap f (Lit x)     = Lit x
   fmap f (Add e1 e2) = Add (f e1) (f e2)
 
@@ -625,6 +630,7 @@ Factoring fold out:
 
 ```Haskell
 instance Functor Expr' where
+  fmap :: (a -> b) -> (Expr' a -> Expr' b)
   fmap f (Lit x)     = Lit x
   fmap f (Add e1 e2) = Add (f e1) (f e2)
 
@@ -676,6 +682,7 @@ Let's define a language with multiplication:
 data Mul' e = Mul e e
 
 instance Functor Mul' where
+  fmap :: (a -> b) -> (Mul' a -> Mul' b)
   fmap f (Mul e1 e2) = Mul (f e1) (f e2)
 
 mulEval' :: Mul' Int -> Int
@@ -770,6 +777,7 @@ data Sum f g e = Left (f e) | Right (g e)
 
 ```Haskell
 instance (Functor f, Functor g) => Functor (Sum f g) where
+  fmap :: (a -> b) -> (Sum f g a -> Sum f g b)
   fmap f (Left e)  = Left (fmap f e)
   fmap f (Right e) = Right (fmap f e)
 ```
@@ -805,6 +813,16 @@ type ExprWithMul = Fix ExprWithMul'
 Really a hack to emulate polymorphic variants.
 
 
+## Other Issues
+
+* extending return types
+    * (REFs)
+    
+* binary methods (e.g. equality)
+
+* extending all existing variants instead of adding new variants
+
+
 ## Other Solutions
 
 These are just two examples of solutions! There are many more.
@@ -825,6 +843,10 @@ These are just two examples of solutions! There are many more.
 ### For functional languages
 
 * 
+
+## References
+
+Survey
 
 
 
