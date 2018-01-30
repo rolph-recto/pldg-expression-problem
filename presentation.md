@@ -14,7 +14,8 @@ fontsize: 9pt
 
 ![Phil Wadler](wadler.gif){ width=50% }
 
-Coined by Phil Wadler in a mailing list discussion
+* Coined by Phil Wadler in a mailing list discussion, but known before that
+  (Reynolds 1975)
 
 
 ## The Problem
@@ -41,7 +42,7 @@ Wadler's criteria for solutions:
 
 * cannot modifying existing code (e.g. you don't own the source code)
 
-* type-safe
+* type-safe (no casts)
 
 
 ## An Example
@@ -55,7 +56,7 @@ code.*
 
 ###
 
-**Datatype**: `EXPR ::= n | EXPR + EXPR
+**Datatype**: EXPR ::= n | EXPR + EXPR
 
 ###
 
@@ -100,16 +101,6 @@ class Lit implements Expr {
     return Integer.toString(val);
   }
 }
-
-class Add implements Expr {
-  Expr e1, e2;
-  Add(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
-
-  int eval() { return arg1.eval() + arg2.eval(); }
-  String print() {
-    return arg1.print() + " + " + arg2.print();
-  }
-}
 ```
 
 
@@ -134,6 +125,7 @@ Suppose you want to add a new operation to compute size of expressions...
 
 . . .
 
+###
 In **Haskell**: Easy! Just create a new function:
 
 ```Haskell
@@ -142,13 +134,9 @@ size (Lit x)     = 1
 size (Add e1 e2) = 1 + size e1 + size e2
 ```
 
+. . .
 
-## Adding New Operations
-
-TODO: align to the top, so works with previous slide.
-
-Suppose you want to add a new operation to compute size of expressions...
-
+###
 In **Java**: Hard! Have to change `Expr` interface, but you don't have access
 to the library source code.
 
@@ -169,6 +157,7 @@ Suppose you want to add multiplication.
 
 . . .
 
+###
 In **Haskell**: Hard! Need to change definition of `Expr` and
 implementations of `eval` and `print`, but you don't have access
 to the library source code.
@@ -190,11 +179,11 @@ print (Add e1 e2) = (print e1) ++ " + " ++ (print e2)
 -- print (Mul e1 e2) = (print e1) ++ " * " ++ (print e2)
 ```
 
-
 ## Adding New Cases
 
 Suppose you want to add multiplication.
 
+###
 In **Java**: Easy! Just create a new class `Mul`:
 
 ```Java
@@ -207,14 +196,14 @@ class Mul implements Expr {
     return arg1.print() + " * " + arg2.print();
   }
 }
+
+
+
+
+
+
+
 ```
-
-
-## Other Problems (Notes, TODO: remove or move at the end)
-
-* Extending the return type
-* Binary methods (like equality)
-* Effects (type checking requires context, use state monad)
 
 
 ## The Problem
@@ -237,22 +226,14 @@ class Mul implements Expr {
 
 **Functional languages**: hard to add new variants (rows)
 
+* code is grouped by operation
+
 ###
 
 **Object-oriented languages**: hard to add new operations (columns)
 
+* code is grouped by variant
 
-## The Problem
-
-TODO: wording is confusing
-
-> * Functional languages group behaviors of all variants for a single operation
-
-> * Object-oriented languages group behaviors for all operations of a single
-    variant
-
-> * Can we do both at the same time, in a type-safe manner, without modifying
-    existing code?
 
 # Solutions
 
@@ -280,7 +261,7 @@ interface Expr {
 interface ExprVisitor<R> {
   R lit(int val);
   R add(Expr e1, Expr e2);
-  R mul(Expr e2, Expr e2);
+  R mul(Expr e1, Expr e2);
 }
 ```
 
@@ -322,7 +303,7 @@ class Print implements ExprVisitor<String> {
 ## Object-oriented Solutions: Visitor Pattern
 
 What was hard for Java is now easy: we can add new operations without modifying
-the library.
+the library. Like in functional languages, visitors group code by operations.
 
 ###
 ```Java
@@ -333,6 +314,9 @@ class Size implements ExprVisitor<Integer> {
   }
 }
 ```
+
+###
+Nice! But there's a problem. Can you guess?
 
 
 ## Object-oriented Solutions: Visitor Pattern
@@ -426,7 +410,7 @@ interface ExprMulAlgebra<E>  {
 }
 
 class EvalMul
-extends EvalMul implements ExprMulAlgebra<Integer> {
+extends Eval implements ExprMulAlgebra<Integer> {
   Integer mul(Integer e1, Integer e2) { return e1 * e2; }
 }
 
@@ -444,14 +428,20 @@ extends Size implements ExprNegAlgebra<Integer> {
 
 ## Object-oriented Solutions: Object Algebras
 
-How do we use object algebras?
+How do we use object algebras? Replace constructors with function calls.
 
-TODO: finish this
+```Java
+<A> A expr(ExprAlgebra<A> alg) {
+  return alg.add(alg.lit(2), alg.lit(2));
+}
 
+Integer exprVal = expr(new Eval()); // 4
+String  exprStr = expr(new Print()); // "2 + 2"
+```
 
 ## Object Algebras vs. Finally Tagless Style
 
-Aside: Compare object algebras with finally tagless style
+**Aside:** Compare object algebras with finally tagless style
 
 ```Haskell
 class Expr a where
@@ -472,6 +462,8 @@ instance Expr Print where
 
 ## Object Algebras vs. Finally Tagless Style
 
+Adding a variant:
+
 ```Haskell
 class Expr a => ExprMul a where
   mul ::: a -> a -> a
@@ -481,6 +473,19 @@ instance ExprMul Eval where
 
 instance ExprMul Print where
   mul (Print e1) (Print e2) = Print (e1 ++ " * " ++ e2)
+```
+
+###
+Adding an operation:
+
+```Haskell
+newtype Size = Size Int
+instance Expr Size where
+  lit val = Size 1
+  add (Size e1) (Size e2) = Size (e1 + e2 + 1)
+  
+instance ExprMul Size where
+  mul (Size e1) (Size e2) = Size (e1 + e2 + 1)
 ```
 
 
@@ -509,62 +514,10 @@ Prelude > x :: Print
 x :: Print "2 + 3"
 ```
 
-
-## Visitor Pattern
-
-+-----+------+-------+------+
-|     | eval | print | size |
-+=====+======+=======+======+
-| Lit |      |       |      |
-+-----+------+-------+------+
-| Add |      |       |      |
-+-----+------+-------+------+
-| Mul |      |       |      |
-+-----+------+-------+------+
-
-
-## Outline
-
-There are a lot of solutions! We will focus on these.
-
-* Multimethods
-
-* Polymorphic variants
-
-* Visitors 
-    * Traditional visitors
-    * "Self-types" approach
-    * Object Algebras / Finally Tagless style
-
-* Data types a la carte
-
-## Multimethods
-
-problems
-
-* too slow
-* how to determine which to dispatch among multiple viable methods?
-
-* can only be practically used in Haskell
-
-
-## Polymorphic Variants
-
-```Haskell
-
-fun x = x + 1
-
-```
-
-Pros:
-
-- makes 
--
-
-
 ## Data types a la carte
 
-*à la carte* /ah luh kahrt, al-uh/: _as separately priced items from a menu, not as part of a set._
+*à la carte* /ah luh kahrt, al-uh/: _as separately priced items from a menu, not
+as part of a set._
 
 
 ## Data types a la carte
@@ -575,9 +528,12 @@ Pros:
 data Expr' e
   = Lit Int
   | Add e e -- Use e not Expr!
+  
+>> Lit 10     :: Expr' a
+>> Add 10 10  :: Expr' Int
 ```
 
-. . .
+## Data types a la carte
 
 ```Haskell
 eval' :: Expr' Int -> Int
@@ -608,9 +564,12 @@ data Expr' e
   | Add e e
 
 data Expr = In (Expr' Expr)
+
+>> In (Lit 10) :: Expr
+>> In (Add (In (Lit 2)) (In (Lit 2))) :: Expr
 ```
 
-. . .
+## Tying the Knot
 
 ```Haskell
 eval :: Expr -> Int
@@ -683,8 +642,29 @@ print :: Expr -> String
 print = fold print'
 ```
 
-Fold takes a function that can reduce one level of the tree, and applies it repeatedly to reduce the whole tree.
+Fold takes a function that can reduce one level of the tree, and applies it
+repeatedly to reduce the whole tree.
 
+## Tying the Knot Revolutions
+
+```Haskell
+>> let e = In (Add (In (Lit 2)) (In (Lit 2))) in print e
+>> fold print' (In (Add (In (Lit 2)) (In (Lit 2))))
+>> print' (fmap (fold print') (Add (In (Lit 2)) (In (Lit 2)))
+-- functor instance for Add "pushes fold" down to subexpressions
+>> print' (Add
+            (fold print' (In (Lit 2)))
+            (fold print' (In (Lit 2))))
+>> print' (Add
+            (print' (fmap print' (Lit 2)))
+            (print' (fmap print' (Lit 2))))
+-- base case: functor instance for Lit doesn't do anything
+>> print' (Add (print' (Lit 2)) (print' (Lit 2)))
+-- print literals!
+>> print' (Add "2" "2")
+-- done!
+>> "2 + 2"
+```
 
 ## Adding New Cases
 
@@ -719,7 +699,7 @@ mulFold f (MulIn e) = f (fmap (mulFold f) e)
 `Mul` and `mulFold` look exactly like `Expr` and `fold`. We must generalize!
 
 
-## Initial Algebras
+## Generalizing folds
 
 It's easy to factor out "knot tying":
 
@@ -732,6 +712,7 @@ fold f (In t) = f (fmap (fold f) t)
 
 . . .
 
+###
 `Expr` and `Mul` are now simplified, and `fold` works on both:
 
 ```Haskell
@@ -778,13 +759,12 @@ This is similar to an `Either` but over type constructors:
 
 ```Haskell
 data Either a b = Left a | Right b
-
 data Sum f g e = Left (f e) | Right (g e)
 ```
 
 . . .
 
-Coproducts of two functors is a functor:
+`Sum` has a functor instance:
 
 ```Haskell
 instance (Functor f, Functor g) => Functor (Sum f g) where
@@ -811,35 +791,38 @@ Now we are ready to combine `Expr'` and `Mul'`:
 
 ```Haskell
 type ExprWithMul' = Sum Expr' Mul'
-
 type ExprWithMul = Fix ExprWithMul'
 
->>> fold eval $
->>>   In (Right (Mul (In (Left (Lit 3))) (In (Left (Lit 4)))))
->>>   ==> 12
+>> fold eval $
+>>   In (Right (Mul (In (Left (Lit 3))) (In (Left (Lit 4)))))
+>>   ==> 12
 ```
-
-. . .
-
-OK, that example is ugly... Let's throw in smart constructors and type classes.
-
-
-## Syntactic Sugar
-
-This is the hacky part of Data types a la carte.
-
-TODO
-
 
 ## Data types a la carte: Lessons
 
 Really a hack to emulate polymorphic variants.
 
 
-## Extensions
+## Solutions
 
-* Open result type
-* Products of signatures (cref auto location tagging and compositional data types)
-* Data type a la carte talks about direct open recursion
-* Problems with type classes
-* Monads
+These are just two examples of solutions! There are many more.
+
+### Language Extensions
+
+* multimethods
+* polymorphic variants
+* J& (???)
+
+
+### For object-oriented languages
+
+* "self-types" (Wadler, Torgensen)
+* extended visitor
+
+
+### For functional languages
+
+* 
+
+
+
