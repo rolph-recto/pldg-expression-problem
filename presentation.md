@@ -255,7 +255,7 @@ Instead of adding new operations on the datatype's interface, define a new
 interface for operations. The only operation that the datatype's interface has
 to define is a method to "accept" visitors.
 
-## Object-oriented Solutions: Visitor Pattern
+## Visitor Pattern
 
 ```Java
 interface Expr {
@@ -269,7 +269,7 @@ interface ExprVisitor<R> {
 }
 ```
 
-## Object-oriented Solutions: Visitor Pattern
+## Visitor Pattern
 
 ```Java
 class Lit implements Expr {
@@ -286,7 +286,7 @@ class Add implements Expr {
 ```
 
 
-## Object-oriented Solutions: Visitor Pattern
+## Visitor Pattern
 
 ```Java
 class Eval implements ExprVisitor<Integer> {
@@ -304,7 +304,7 @@ class Print implements ExprVisitor<String> {
 }
 ```
 
-## Object-oriented Solutions: Visitor Pattern
+## Visitor Pattern
 
 What was hard for Java is now easy: we can add new operations without modifying
 the library. Like in functional languages, visitors group code by operations.
@@ -332,7 +332,7 @@ the `ExprVisitor` interface of the library.
 **Visitors flip the expression problem for object-oriented languages**.
 
 
-## Object-oriented Solutions: Visitor Pattern
+## Visitor Pattern
 
 Can we use inheritance to make adding new kinds of expressions easy?
 
@@ -341,7 +341,7 @@ interface ExprWithMulVisitor<R> extends ExprVisitor<R> {
   R mul(ExprWithMul e);
 }
 
-class MulExpr implements ExprWithMul {
+class MulExpr implements Expr {
   Expr e1, e2;
   Mul(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
 
@@ -352,16 +352,16 @@ class MulExpr implements ExprWithMul {
 Need nested inheritance to make this work (J&, Familia).
 
 
-## Object-oriented Solutions: Object Algebras
+## Object Algebras
 
 > * "Extensibility for the Masses" by Oliveira and Cook, ECOOP 2012
 
 > * inspired by Church encodings
 
-> * very similar to finally tagless style (Carette et al, JFP 2009)
+> * very similar to tagless final style (Carette et al, JFP 2009)
 
 
-## Object-oriented Solutions: Object Algebras
+## Object Algebras
 
 ```Java
 interface ExprAlgebra<E> {
@@ -380,7 +380,7 @@ class Print implements ExprAlgebra<String> {
 }
 ```
 
-## Object-oriented Solutions: Object Algebras
+## Object Algebras
 
 ###
 Like the visitor pattern, we can add operations by creating a new class that
@@ -394,7 +394,7 @@ class Size implements ExprAlgebra<Integer> {
 }
 ```
 
-## Object-oriented Solutions: Object Algebras
+## Object Algebras
 
 We can extend the `ExprAlgebra<E>` interface to support new variants, and can
 extend existing operations easily.
@@ -402,7 +402,8 @@ extend existing operations easily.
 ###
 **This satisfies Wadler's solution criteria for the expression problem!**
 
-## Object-oriented Solutions: Object Algebras
+
+## Object Algebras
 
 ```Java
 interface ExprMulAlgebra<E> extends ExprAlgebra<E> {
@@ -426,7 +427,7 @@ extends Size implements ExprMulAlgebra<Integer> {
 ```
 
 
-## Object-oriented Solutions: Object Algebras
+## Object Algebras
 
 How do we use object algebras? Replace constructors with function calls.
 
@@ -439,9 +440,9 @@ Integer exprVal = expr(new EvalMul()); // 6
 String  exprStr = expr(new PrintMul()); // "2 * 2 + 2"
 ```
 
-## Object Algebras vs. Finally Tagless Style
+## Object Algebras vs. Tagless Final Style
 
-**Aside:** Compare object algebras with finally tagless style
+**Aside:** Compare object algebras with tagless final style
 
 ```Haskell
 class Expr a where
@@ -460,7 +461,7 @@ instance Expr Print where
 ```
 
 
-## Object Algebras vs. Finally Tagless Style
+## Object Algebras vs. Tagless Final Style
 
 Adding a variant:
 
@@ -489,7 +490,7 @@ instance ExprMul Size where
 ```
 
 
-## Object Algebras vs. Finally Tagless Style
+## Object Algebras vs. Tagless Final Style
 
 Bonus Haskell trivia: What is the type and value of `x`?
 
@@ -522,7 +523,8 @@ Print "2 + 3"
 as part of a set._
 
 
-_Data types a la carte_ (Swierstra)
+###
+"Data types a la carte" (Swierstra, JFP 2008)
 
 
 ## Data types a la carte
@@ -883,7 +885,8 @@ instance Functor f => f :<: f where
 instance (Functor f, Functor g) => f :<: Sum f g where
   inj = Left
 
-instance (Functor f, Functor g, Functor h, f :<: g) => f :<: Sum h g where
+instance (Functor f, Functor g, Functor h, f :<: g)
+         => f :<: Sum h g where
   inj = Right . inj
 ```
 
