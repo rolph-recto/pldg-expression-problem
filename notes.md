@@ -84,3 +84,12 @@ TODO
 * Problems with type classes
 * Monads
 
+
+## Other Issues
+
+* extending return types
+    * (REFs)
+    
+* binary methods (e.g. equality)
+
+* extending all existing variants instead of adding new variants

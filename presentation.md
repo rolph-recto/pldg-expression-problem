@@ -336,12 +336,7 @@ the `ExprVisitor` interface of the library.
 
 Can we use inheritance to make adding new kinds of expressions easy?
 
-###
 ```Java
-interface ExprWithMul extends Expr {
-  <R> R accept(ExprWithMulVisitor<R> v);
-}
-
 interface ExprWithMulVisitor<R> extends ExprVisitor<R> {
   R mul(ExprWithMul e);
 }
@@ -350,10 +345,11 @@ class MulExpr implements ExprWithMul {
   Expr e1, e2;
   Mul(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
 
-  <R> R accept(ExprWithMulVisitor<R> v) { return v.mul(expr); }
   <R> R accept(ExprVisitor<R> v) { /* what do we call here?? */ }
 }
 ```
+
+Need nested inheritance to make this work (J&, Familia).
 
 
 ## Object-oriented Solutions: Object Algebras
@@ -495,7 +491,7 @@ instance ExprMul Size where
 
 ## Object Algebras vs. Finally Tagless Style
 
-Bonus Haskell trivia: What is the type of `x`?
+Bonus Haskell trivia: What is the type and value of `x`?
 
 ```Haskell
 Prelude > let x = add (lit 2) (lit 3)
@@ -512,10 +508,10 @@ Prelude > :t x
 x :: Expr t => t
 
 Prelude > x :: Eval
-x :: Eval 5
+Eval 5
 
 Prelude > x :: Print
-x :: Print "2 + 3"
+Print "2 + 3"
 ```
 
 ## Data types a la carte
@@ -822,41 +818,19 @@ Most work goes into getting it closer to OCaml's `Polymorphic Variants`.
 Really a hack to emulate polymorphic variants.
 
 
-## Other Issues
-
-* extending return types
-    * (REFs)
-    
-* binary methods (e.g. equality)
-
-* extending all existing variants instead of adding new variants
-
-
 ## Other Solutions
 
 These are just two examples of solutions! There are many more.
 
-
-### Language Extensions
-
 * multimethods
+
 * polymorphic variants
-* J& (???)
 
+* nested inheritance
+    * J& (Nystrom, Qi and Myers, OOPSLA 2006)
+    * Familia (Zhang and Myers, OOPSLA 2017)
 
-### For object-oriented languages
-
-* "self-types" (Wadler, Torgensen)
-* extended visitor
-
-
-### For functional languages
-
-* 
-
-## References
-
-Survey
-
-
+* "self-types" using type parameter constraints
+    * "The Expression Problem" (Wadler 1998)
+    * "The Expression Problem Revisited" (Torgersen, ECOOP 2004)
 
