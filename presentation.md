@@ -454,7 +454,7 @@ Adding a variant:
 
 ```Haskell
 class Expr a => ExprMul a where
-  mul ::: a -> a -> a
+  mul :: a -> a -> a
 
 instance ExprMul Eval where
   mul (Eval e1) (Eval e2) = e1 * e2
