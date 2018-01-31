@@ -150,6 +150,8 @@ interface Expr {
 
 Suppose you want to add multiplication.
 
+. . .
+
 ###
 In **Java**: Easy! Just create a new class `Mul`:
 
@@ -175,8 +177,6 @@ class Mul implements Expr {
 ## Adding New Cases
 
 Suppose you want to add multiplication.
-
-. . .
 
 ###
 In **Haskell**: Hard! Need to change definition of `Expr` and
