@@ -61,8 +61,6 @@ manipulate arithmetic expressions. You use a library to support this feature.
 
 ## Haskell Implementation
 
-Source code of library in Haskell:
-
 ```Haskell
 data Expr
   = Lit Int
@@ -80,8 +78,6 @@ print (Add e1 e2) = (print e1) ++ " + " ++ (print e2)
 
 ## Java Implementation
 
-Source code of library in Java:
-
 ```Java
 interface Expr {
   int eval();
@@ -93,24 +89,15 @@ class Lit implements Expr {
   Lit(int v) { val = v; }
 
   int eval() { return val; }
-  String print() {
-    return Integer.toString(val);
-  }
+  String print() { return Integer.toString(val); }
 }
-```
 
-
-## Java Implementation
-
-```Java
 class Add implements Expr {
   Expr e1, e2;
   Add(Expr arg1, Expr arg2) { e1 = arg1; e2 = arg2; }
 
   int eval() { return arg1.eval() + arg2.eval(); }
-  String print() {
-    return arg1.print() + " + " + arg2.print();
-  }
+  String print() { return arg1.print() + " + " + arg2.print(); }
 }
 ```
 
@@ -471,7 +458,7 @@ class Expr a => ExprMul a where
 
 instance ExprMul Eval where
   mul (Eval e1) (Eval e2) = e1 * e2
-
+  
 instance ExprMul Print where
   mul (Print e1) (Print e2) = Print (e1 ++ " * " ++ e2)
 ```
@@ -694,7 +681,7 @@ mulEval' :: Mul' Int -> Int
 mulEval' (Mul x1 x2) = x1 * x2
 
 mulPrint' :: Mul' String -> String
-mulPrint' (Mul e1 e2) = e1 ++ " + " ++ e1
+mulPrint' (Mul e1 e2) = e1 ++ " + " ++ e2
 ```
 
 . . .
@@ -772,7 +759,7 @@ To combine two signatures, take their coproduct.
 This is similar to an `Either` but over type constructors:
 
 ```Haskell
-data Either a b = Left a | Right b
+-- data Either a b = Left a | Right b
 data Sum f g e = Left (f e) | Right (g e)
 ```
 
@@ -900,6 +887,8 @@ What's bad about this definition?
 * Use open recursion, i.e. "signatures"
 
 * Define sum over signatures
+
+* Use folds
 
 . . .
 
